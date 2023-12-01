@@ -20,33 +20,47 @@ fn main() {
     // Iterate through the lines in the file
     for line in io::BufReader::new(file).lines() {
         if let Ok(line) = line {
-            let mut match_iterator = line.matches(char::is_numeric);
-            let first_match = match_iterator.next();
-            let last_match = match_iterator.next_back();
+            // List of tuples of match pattern and their numeric value
+            let patterns = [
+                ("one", 1), ("1", 1),
+                ("two", 2), ("2", 2),
+                ("three", 3), ("3", 3),
+                ("four", 4), ("4", 4),
+                ("five", 5), ("5", 5),
+                ("six", 6), ("6", 6),
+                ("seven", 7), ("7", 7),
+                ("eight", 8), ("8", 8),
+                ("nine", 9), ("9", 9),
+            ];
 
-            let mut first_digit = 0;
+            let mut index_first_match = usize::MAX;
+            let mut value_first_match = 0;
+            let mut index_last_match = usize::MIN;
+            let mut value_last_match = 0;
+            for (pattern, value) in patterns {
+                match line.match_indices(pattern).next() {
+                    Some((i, _)) => {
+                        if i <= index_first_match {
+                            index_first_match = i;
+                            value_first_match = value;
+                        }
+                    },
+                    None => ()
+                };
+                match line.rmatch_indices(pattern).next() {
+                    Some((i, _)) => {
+                        if i >= index_last_match {
+                            index_last_match = i;
+                            value_last_match = value;
+                        }
+                    },
+                    None => ()
+                };
+            }
 
-            println!("Current line is {}", line);
-            match first_match.expect("Each line should have at least one digit").parse::<u32>() {
-                Ok(num) => {
-                    sum += 10 * num;
-                    first_digit = num;
-                },
-                Err(_) => println!("Could not parse {} as integer", first_match.unwrap()),
-            };
+            println!("Found in {}: {}{}", line, value_first_match, value_last_match);
 
-            match last_match {
-                Some(letter) => match letter.parse::<u32>() {
-                    Ok(num) => sum += num,
-                    Err(_) => println!("Could not parse {} as integer", last_match.unwrap()),
-                },
-                None => {
-                    // This can happen if the line only has a single digit.
-                    // In that case we add the first digit again.
-                    sum += first_digit;
-                }
-            };
-
+            sum += 10 * value_first_match + value_last_match;
         }
     }
 
